@@ -51,7 +51,7 @@ graph TB
 
     subgraph External["External Services & APIs"]
         CloudLLM["Cloud LLMs<br/>Claude, GPT-4<br/>Backup inference"]
-        LocalLLM["Local LLM<br/>DGX Spark<br/>Privacy-sensitive"]
+        LocalLLM["Local LLM<br/>Mac Studio M3 Ultra<br/>Privacy-sensitive"]
         APIs["External APIs<br/>Canvas, Slack<br/>GitHub, etc."]
     end
 
@@ -377,52 +377,19 @@ sequenceDiagram
 
 ### Container-Level Isolation (Docker)
 
-```mermaid
-graph TB
-    subgraph Host["Host Server"]
-        subgraph Net["Docker Networks"]
-            Net_School["school-net<br/>172.20.0.0/16"]
-            Net_Work["work-net<br/>172.21.0.0/16"]
-            Net_Personal["personal-net<br/>172.22.0.0/16"]
-            Net_Label["project-net<br/>172.23.0.0/16"]
-        end
-
-        subgraph Containers["Workspace Containers"]
-            C_School["school-workspace<br/>Isolated network<br/>Separate volumes"]
-            C_Work["work-workspace<br/>Isolated network<br/>Separate volumes"]
-            C_Personal["personal-workspace<br/>Isolated network<br/>Separate volumes"]
-            C_Label["project-workspace<br/>Isolated network<br/>Separate volumes"]
-        end
-
-        subgraph Volumes["Docker Volumes"]
-            V_School["school-fs<br/>school-creds"]
-            V_Work["work-fs<br/>work-creds"]
-            V_Personal["personal-fs<br/>personal-creds"]
-            V_Label["project-fs<br/>project-creds"]
-        end
-    end
-
-    C_School --> Net_School
-    C_Work --> Net_Work
-    C_Personal --> Net_Personal
-    C_Label --> Net_Label
-
-    C_School --> V_School
-    C_Work --> V_Work
-    C_Personal --> V_Personal
-    C_Label --> V_Label
-
-    style Net fill:#e1f5ff
-    style Containers fill:#e8f5e9
-    style Volumes fill:#fff3e0
-```
+Each workspace runs in its own Docker container with:
 
 **Isolation Guarantees:**
-- ✅ **Network:** Workspaces cannot see each other's traffic
-- ✅ **File System:** Separate volumes, no cross-access
-- ✅ **Process:** Separate process namespaces
-- ✅ **Credentials:** Environment variables isolated per container
-- ✅ **Browser Sessions:** Separate browser profiles/data directories
+- **File System:** Separate Docker volumes per workspace
+- **Process:** Separate process namespaces
+- **Credentials:** Environment variables isolated per container
+- **Browser Sessions:** Separate browser profiles/data directories
+
+**Implementation:**
+- Simple Docker Compose setup
+- Each workspace gets its own container and volume
+- Workspaces communicate only through Master instance
+- No complex network configuration needed for single-user system
 
 ### Cross-Workspace Data Flow (Controlled)
 
@@ -456,16 +423,16 @@ graph LR
 | **Containerization** | Docker / Docker Compose | Workspace isolation |
 | **Agentic Browser** | Browser-Use / Skyvern | Web automation with reasoning |
 | **Vector Store** | ChromaDB / FAISS | Semantic search over workspace content |
-| **State Store** | Redis | Fast in-memory state for conversations |
+| **State Store** | In-memory (Python dict) or SQLite | Simple state persistence for single user |
 | **File Watching** | Watchdog (Python) | Detect file changes for context updates |
 
-### Local LLM Stack
+### Local LLM Stack (Mac Studio M3 Ultra)
 
 | Component | Technology | Purpose |
 |-----------|-----------|---------|
-| **Inference Engine** | vLLM / TensorRT-LLM | Optimized local inference |
-| **Model Format** | GGUF / AWQ | Quantized models for efficiency |
-| **Model Management** | Ollama | Easy model downloading and switching |
+| **Inference Engine** | MLX / llama.cpp | Metal-optimized inference for Apple Silicon |
+| **Model Format** | GGUF / MLX format | Quantized models optimized for unified memory |
+| **Model Management** | Ollama / LM Studio | Easy model downloading and switching |
 | **Primary Model** | Llama 3.1 70B / DeepSeek Coder | General reasoning + code |
 | **Specialized Models** | CodeLlama, Mistral variants | Task-specific models |
 
@@ -626,50 +593,19 @@ SCHOOL_EMAIL=student@school.edu
 
 ## Observability & Debugging
 
-### Monitoring Stack
+### Monitoring
 
-```mermaid
-graph LR
-    subgraph System["System Components"]
-        Master["Master<br/>Instance"]
-        WS1["School<br/>Workspace"]
-        WS2["Work<br/>Workspace"]
-    end
+**Simple approach for single-user system:**
+- **System Performance:** Activity Monitor (Mac), Docker Desktop dashboard
+- **Logs:** Standard output from Docker containers, simple file logging
+- **Agent Activity:** Console output showing agent decisions and actions
+- **Errors:** Basic error logging to files per workspace
 
-    subgraph Observability["Observability Stack"]
-        Logs["Centralized Logs<br/>Loki / Elasticsearch"]
-        Metrics["Metrics<br/>Prometheus"]
-        Traces["Distributed Tracing<br/>Jaeger"]
-        Dashboard["Dashboards<br/>Grafana"]
-    end
-
-    Master --> Logs
-    Master --> Metrics
-    Master --> Traces
-
-    WS1 --> Logs
-    WS1 --> Metrics
-    WS1 --> Traces
-
-    WS2 --> Logs
-    WS2 --> Metrics
-    WS2 --> Traces
-
-    Logs --> Dashboard
-    Metrics --> Dashboard
-    Traces --> Dashboard
-
-    style System fill:#e8f5e9
-    style Observability fill:#e1f5ff
-```
-
-**Metrics to Track:**
-- Request routing accuracy (% correct workspace)
+**Useful Metrics:**
 - Task completion time per workspace
 - LLM inference latency (local vs cloud)
 - MCP tool call success rate
-- Sub-agent error rate
-- Context cache hit rate
+- Workspace container health
 
 ### Debug Mode
 
@@ -689,30 +625,32 @@ Jarvis: "[Routing to School workspace...]
 
 ## Future Enhancements
 
+**Note:** This is a conceptual design - no implementation exists yet.
+
 ### Phase 1 (MVP)
-- ✅ Master orchestrator with routing
-- ✅ 2-3 workspaces (School, Personal)
-- ✅ MCP tool integrations
-- ✅ Basic sub-agent deployment
+- Master orchestrator with routing
+- 2-3 workspaces (School, Personal)
+- MCP tool integrations
+- Basic sub-agent deployment
 
 ### Phase 2 (Full System)
-- ⏳ All 4 workspaces
-- ⏳ Agentic browser integration
-- ⏳ Container isolation (Docker)
-- ⏳ Credential management system
+- All 4 workspaces
+- Agentic browser integration
+- Container isolation (Docker)
+- Credential management system
 
 ### Phase 3 (Advanced Features)
-- 🔮 Knowledge graphs per workspace
-- 🔮 Automatic task scheduling
-- 🔮 Proactive suggestions
-- 🔮 Voice interface (Vision Pro)
-- 🔮 Multi-user support (family members)
+- Knowledge graphs per workspace
+- Automatic task scheduling
+- Proactive suggestions
+- Voice interface (Vision Pro)
+- Multi-user support (family members)
 
 ### Phase 4 (Production Hardening)
-- 🔮 High availability (container orchestration)
-- 🔮 Disaster recovery
-- 🔮 Performance optimization
-- 🔮 Cost optimization (local vs cloud routing)
+- High availability (container orchestration)
+- Disaster recovery
+- Performance optimization
+- Cost optimization (local vs cloud routing)
 
 ---
 
