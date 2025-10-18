@@ -16,21 +16,15 @@ graph TB
         FW["Firewall<br/>Network Isolation<br/>Port Security"]
     end
 
-    subgraph Server["Backend Server - AI Inference Engine"]
-        subgraph Compute["Compute Resources"]
-            GPU["NVIDIA DGX Spark (2025)<br/>GB10 Grace Blackwell Superchip<br/>128GB Unified Memory<br/>~200B Parameter Support"]
-            CPU["CPU: 16+ Cores<br/>High-frequency for orchestration"]
-            RAM["RAM: 128GB DDR5<br/>System Memory"]
-        end
+    subgraph Server["Backend Server - Mac Studio M3 Ultra"]
+        Studio["Mac Studio M3 Ultra<br/>32-core CPU (28P + 4E)<br/>80-core GPU<br/>512GB Unified Memory<br/>800GB/s Memory Bandwidth<br/>Up to 16TB SSD Storage<br/>Thunderbolt 5 Connectivity"]
 
-        subgraph Storage["Storage Layer"]
-            SSD1["NVMe SSD (2TB+)<br/>OS & Applications<br/>Fast workspace access"]
-            SSD2["NVMe SSD (4TB+)<br/>Workspace File Systems<br/>LLM-optimized structure"]
-            HDD["HDD/NAS (10TB+)<br/>Long-term storage<br/>Backups & archives"]
+        subgraph Storage["External Storage (Optional)"]
+            NAS["NAS (10TB+)<br/>Long-term storage<br/>Backups & archives"]
         end
 
         subgraph Runtime["Container Runtime"]
-            Docker["Docker Engine<br/>Workspace Isolation<br/>Resource Management"]
+            Docker["Docker Desktop for Mac<br/>Workspace Isolation<br/>Resource Management"]
         end
     end
 
@@ -54,12 +48,8 @@ graph TB
     VPN -->|Secure Tunnel| FW
     FW -->|Filtered Traffic| Server
 
-    %% Server Internal
-    GPU -->|PCIe 5.0| CPU
-    CPU -->|Memory Bus| RAM
-    CPU -->|PCIe 4.0| SSD1
-    CPU -->|PCIe 4.0| SSD2
-    CPU -->|SATA/NAS| HDD
+    %% Server Internal (Unified Architecture)
+    Studio -->|Thunderbolt 5| NAS
 
     %% Server to Internet
     Server -->|HTTPS/API| Internet
@@ -72,8 +62,7 @@ graph TB
     style Network fill:#fff4e1
     style Server fill:#ffe1e1
     style Internet fill:#e1ffe1
-    style GPU fill:#ffd700
-    style Compute fill:#ffebeb
+    style Studio fill:#ffd700
     style Storage fill:#ebebff
     style Runtime fill:#ebffeb
 ```
@@ -97,38 +86,33 @@ graph TB
 
 ### Backend Server (AI Inference Engine)
 
-#### GPU - Primary Inference Hardware
-**NVIDIA DGX Spark (2025 Release)**
-- **Chip:** GB10 Grace Blackwell Superchip
-- **Memory:** 128GB unified memory
-- **Capability:** Run models up to 200B parameters
-- **Cost:** ~$4,000
-- **Why:** Perfect balance of cost/performance for local inference
-- **Alternatives:**
-  - RTX 4090 (~$1,600, 24GB VRAM)
-  - A6000 (~$4,000, 48GB VRAM)
+#### Mac Studio M3 Ultra (2025)
+**Apple's Most Powerful Desktop**
+- **CPU:** 32-core (28 performance + 4 efficiency cores)
+- **GPU:** 80-core unified architecture
+- **Neural Engine:** 32-core for AI acceleration
+- **Unified Memory:** 512GB (shared CPU/GPU/Neural Engine)
+- **Memory Bandwidth:** 800GB/s
+- **Capability:** Run models up to 400B+ parameters (quantized)
+- **Cost:** $9,499 (512GB config) | $14,099 (fully maxed)
+- **Why:** Largest unified memory on any personal computer, native macOS integration
+- **Inference Framework:** MLX, llama.cpp, or vLLM with Metal acceleration
 
-#### CPU
-- **Cores:** 16+ cores (e.g., AMD Ryzen 9 7950X or Intel i9-13900K)
-- **Purpose:** Orchestration, routing, container management
-- **Clock Speed:** High single-thread for responsive interactions
+#### Internal Storage
+- **Configuration:** Up to 16TB internal SSD
+- **Performance:** High-bandwidth NVMe for workspace access
+- **Recommendation:** 4TB-8TB for active workspaces
 
-#### RAM
-- **Capacity:** 128GB DDR5 (64GB minimum)
-- **Speed:** 5200MT/s or faster
-- **Purpose:** System memory, multiple workspace containers, caching
-
-#### Storage Strategy
-| Drive Type | Capacity | Purpose | Speed |
-|------------|----------|---------|-------|
-| **NVMe SSD #1** | 2TB | OS, applications, Docker images | 7000+ MB/s |
-| **NVMe SSD #2** | 4TB | Workspace file systems, active projects | 7000+ MB/s |
-| **HDD/NAS** | 10TB+ | Long-term storage, backups, archives | 200+ MB/s |
+#### External Storage Strategy
+| Drive Type | Capacity | Purpose | Connection |
+|------------|----------|---------|------------|
+| **Thunderbolt RAID** | 4TB+ | Hot storage for large models | Thunderbolt 5 (120Gbps) |
+| **NAS** | 10TB+ | Long-term storage, backups, archives | 10Gb Ethernet |
 
 ### Power & Cooling
-- **PSU:** 1200W+ 80+ Platinum (GPU demands)
-- **Cooling:** AIO liquid cooling for CPU, adequate case airflow for GPU
-- **UPS:** 1500VA+ for power protection
+- **Power Consumption:** ~200W typical, ~300W peak
+- **Cooling:** Apple-designed thermal architecture (quiet, efficient)
+- **UPS:** 1000VA+ for power protection (lower draw than PC build)
 
 ## Network Topology
 
@@ -142,7 +126,7 @@ Router (WiFi 6E + 10Gb Ethernet)
    ├─→ Vision Pro (WiFi)
    ├─→ MacBook (WiFi/Ethernet)
    ├─→ iPhone (WiFi)
-   └─→ Backend Server (10Gb Ethernet) ← Priority QoS
+   └─→ Mac Studio (10Gb Ethernet) ← Priority QoS
 ```
 
 ### Remote Access Security Layers
@@ -153,7 +137,7 @@ Tailscale VPN (encrypted tunnel)
    ↓
 Home Network Firewall
    ↓
-Backend Server
+Mac Studio
    ↓
 Biometric Re-auth (Face ID/Touch ID)
    ↓
@@ -178,80 +162,92 @@ Workspace Access Granted
 - **Credential Isolation:** Environment variables, secrets per workspace
 
 ### Layer 4: Data Encryption
-- **Storage:** Encrypted NVMe drives (LUKS/FileVault)
+- **Storage:** FileVault 2 full-disk encryption (T2/M-series secure enclave)
 - **Transit:** TLS 1.3 for all API communications
-- **Backups:** Encrypted at rest
+- **Backups:** Encrypted at rest with Time Machine encryption
 
 ## Performance Targets
 
 ### Latency Goals
 | Operation | Target Latency | Notes |
 |-----------|---------------|-------|
-| **User input → Master response** | <500ms | Orchestration layer |
-| **Local LLM inference** | 20-50 tokens/sec | With DGX Spark |
+| **User input → Master response** | <300ms | Orchestration layer (native macOS) |
+| **Local LLM inference (70B)** | 30-60 tokens/sec | With M3 Ultra + MLX optimization |
+| **Local LLM inference (405B quantized)** | 10-20 tokens/sec | 512GB unified memory advantage |
 | **MCP tool call** | 500ms - 2s | Depends on external API |
 | **Workspace switch** | <200ms | Container already running |
-| **Cold workspace start** | 2-5s | Container spin-up |
+| **Cold workspace start** | 2-5s | Docker Desktop for Mac |
 
 ### Bandwidth Requirements
-- **Local Network:** 10Gb Ethernet ideal, 2.5Gb minimum
+- **Local Network:** 10Gb Ethernet recommended for Mac Studio
 - **Internet:** 500Mbps+ symmetric (for cloud API fallback)
-- **Storage I/O:** 7000+ MB/s for responsive file operations
+- **Storage I/O:** Internal SSD provides 5000-7000+ MB/s
+- **Thunderbolt 5:** 120Gbps for external RAID/NAS
 
 ## Scalability Considerations
 
-### Current Design (Single Server)
+### Current Design (Single Mac Studio)
 - **Users:** 1 (personal use)
-- **Concurrent Workspaces:** 4 active
+- **Concurrent Workspaces:** 4-8 active
 - **Max Sub-agents:** 10-20 simultaneously
-- **Model Size:** Up to 200B parameters
+- **Model Size:** Up to 405B parameters (quantized)
 
 ### Future Scaling Options
-- **Multi-GPU:** Add additional GPUs for parallel inference
-- **Distributed:** LangGraph supports distributed agent networks
+- **Second Mac Studio:** Link via Thunderbolt or 10Gb Ethernet for distributed inference
+- **Mac Pro:** Upgrade to Mac Pro for PCIe expansion (future compatibility)
+- **Distributed:** LangGraph supports distributed agent networks across Macs
 - **Cloud Hybrid:** Offload heavy workloads to cloud during peak
-- **Kubernetes:** Graduate from Docker to K8s for multi-node
+- **Kubernetes:** Graduate from Docker to K8s for multi-node (macOS supports K8s)
 
 ## Cost Breakdown
 
-| Component | Cost Range | Notes |
-|-----------|-----------|-------|
-| **NVIDIA DGX Spark** | $4,000 | 2025 release |
-| **CPU (Ryzen 9 / i9)** | $500-700 | High-end consumer |
-| **RAM (128GB DDR5)** | $400-500 | 4x32GB kit |
-| **NVMe SSDs (6TB total)** | $600-800 | Gen 4 drives |
-| **Motherboard** | $300-400 | Adequate PCIe lanes |
-| **Case + Cooling** | $300-400 | Airflow + AIO |
-| **PSU (1200W+)** | $200-300 | 80+ Platinum |
-| **Networking** | $300-600 | Router + switch |
-| **UPS** | $200-300 | Battery backup |
-| **TOTAL** | **~$7,200-8,400** | Complete build |
+| Component | Cost | Notes |
+|-----------|------|-------|
+| **Mac Studio M3 Ultra Base** | $3,999 | 28-core CPU, 60-core GPU, 96GB RAM, 1TB |
+| **+ 512GB Unified Memory** | +$5,500 | Critical for large model inference |
+| **+ Storage Upgrade (8TB)** | +$2,000 | Recommended for workspaces + models |
+| **Thunderbolt RAID/NAS** | $800-1,500 | External storage for backups |
+| **Networking (Router/Switch)** | $300-600 | 10Gb Ethernet + WiFi 6E |
+| **UPS** | $150-250 | Battery backup (lower wattage needed) |
+| **TOTAL (Recommended Config)** | **~$12,700-13,900** | Mac Studio + peripherals |
+| **TOTAL (Maxed Out)** | **~$16,400** | 512GB RAM + 16TB storage + accessories |
+
+### Mac Studio Configuration Options
+
+| Config | RAM | Storage | Price | Use Case |
+|--------|-----|---------|-------|----------|
+| **Base M3 Ultra** | 96GB | 1TB | $3,999 | Light AI workloads |
+| **Recommended** | 512GB | 8TB | $11,499 | Large model inference (200B+) |
+| **Maxed Out** | 512GB | 16TB | $14,099 | Maximum capability |
 
 ### Phased Purchase Strategy
-1. **Phase 0 (Prototype):** Use existing hardware, cloud APIs
-2. **Phase 1 (MVP):** CPU, RAM, storage ($1,500)
-3. **Phase 2 (Local Inference):** Add GPU when DGX Spark ships ($4,000)
-4. **Phase 3 (Production):** Network upgrades, UPS, redundancy ($1,000)
+1. **Phase 0 (Prototype):** Use existing MacBook, cloud APIs ($0)
+2. **Phase 1 (MVP):** Mac Studio base config, test workloads ($4,000)
+3. **Phase 2 (Production):** Upgrade to 512GB RAM for local inference (+$5,500)
+4. **Phase 3 (Scale):** Add storage, networking, UPS (+$2,000-3,000)
 
 ## Maintenance & Operations
 
 ### Monitoring
-- **GPU Utilization:** NVIDIA SMI, Grafana dashboards
-- **Container Health:** Docker stats, health checks
+- **System Performance:** Activity Monitor, iStat Menus, or asitop (Apple Silicon monitoring)
+- **GPU/Neural Engine:** Metal Performance HUD, MLX metrics
+- **Container Health:** Docker Desktop dashboard, Docker stats
 - **Network Performance:** Router metrics, bandwidth monitoring
-- **Storage:** SMART monitoring, capacity alerts
+- **Storage:** macOS built-in SMART monitoring, Disk Utility
 
 ### Backup Strategy
 - **Configuration:** Git repo (nightly commit)
-- **Workspace Data:** Incremental backups to NAS (daily)
-- **Full System:** Weekly image to external drive
-- **Off-site:** Cloud backup of critical data (monthly)
+- **Workspace Data:** Time Machine to NAS (hourly incremental)
+- **Full System:** Time Machine snapshots (automatic)
+- **Off-site:** iCloud+ or cloud backup of critical data (continuous)
+- **Clone:** Carbon Copy Cloner for bootable backup (weekly)
 
 ### Power Management
-- **Idle Mode:** GPU power-down when unused
+- **Idle Mode:** Apple Silicon automatically manages power efficiency
 - **Sleep Workspaces:** Stop containers after 30min inactivity
-- **Wake-on-LAN:** Remote wake server if needed
-- **Estimated Power:** 300W idle, 800W peak (GPU inference)
+- **Wake-on-LAN:** macOS supports wake for network access
+- **Estimated Power:** 50-100W idle, 200-300W peak (inference workload)
+- **Energy Efficiency:** ~60% less power than equivalent PC build
 
 ---
 
