@@ -21,6 +21,7 @@ This is a **design and research document**, not an implementation. The purpose i
 - **[MASTER_AI_WORKSPACE_VISION.md](MASTER_AI_WORKSPACE_VISION.md)** - High-level vision, user experience model, technical analysis, and open questions
 - **[SOFTWARE_ARCHITECTURE.md](SOFTWARE_ARCHITECTURE.md)** - Detailed software architecture, component design, and technology stack
 - **[HARDWARE_ARCHITECTURE.md](HARDWARE_ARCHITECTURE.md)** - Physical infrastructure, network topology, and hardware specifications
+- **[SMART_GLASSES_RESEARCH.md](SMART_GLASSES_RESEARCH.md)** - First-hand research on smart glasses as Jarvis client devices
 
 ## Key Concepts
 

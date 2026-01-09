@@ -363,7 +363,7 @@ When running a local DGX Spark setup accessed from multiple devices (Mac, phone,
 
 ### Device Ecosystem
 
-The complete hardware setup spans multiple devices, all connecting to the DGX Spark backend:
+The complete hardware setup spans multiple devices, all connecting to the backend:
 
 **Vision Pro (Primary Interface):**
 - Spatial computing for workspace visualization
@@ -381,7 +381,14 @@ The complete hardware setup spans multiple devices, all connecting to the DGX Sp
 - Quick queries and notifications
 - Conversation history syncs across all devices
 
-**Backend (DGX Spark):**
+**Smart Glasses (Ambient Access):**
+- Voice-first queries without pulling out phone
+- Camera as input sensor (not just capture) — "what am I looking at?"
+- Bypass on-device AI limitations by routing to Jarvis backend
+- Key insight: Current glasses (Ray-Ban Meta) limited by social-first integrations; Jarvis provides the missing utility ecosystem (smart home, packages, productivity)
+- See [SMART_GLASSES_RESEARCH.md](SMART_GLASSES_RESEARCH.md) for detailed analysis
+
+**Backend (Mac Studio M3 Ultra):**
 - All compute and AI processing happens here
 - Devices are thin clients connecting to the backend
 - Single source of truth for all workspace state
